@@ -14,7 +14,7 @@ The goals are to design electronics and boards to make this easy to use.
    * Decode each rows time
    * Generates timing info, real first exposure time, and time for any row (if rolling shutter camera). Recommends offset to be added to header/metadata. 
 
-You should see the following:
+Below is example of software auto registering LED bar.
 ![Succesful Registration](nexta_analysis/getting_started1.jpg)
 
 
@@ -34,7 +34,7 @@ A better introduction is described in the paper listed above.
 ![Image with camera with lens and NEXTA board](camera_with_nexta.jpg)
 
 * Take your camera with a lens on it
-* Put electronics (NEXTA) in front of camera, square well focused.
+* Put electronics (NEXTA) in front of camera, square, well focused.
 * Take a intial well lit exposure used for LED bar registartion.
 * After NEXTA gets GNSS lock and starts blinking, take short exposures in a dark area.
 * Use analysis software to get timing info to see the difference between what is in header/metadata.
