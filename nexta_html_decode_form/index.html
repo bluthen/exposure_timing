@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+<label for="number">Timer Board Value: </label>
+<input type="text" id="number" size="25" maxlength="20">
+<br/>
+Value: <span id="value"></span>
+<script>
+    function decodeDigit(digit) {
+        console.log(digit);
+        switch (digit) {
+            case '0000':
+                return 0;
+            case '0001':
+                return 1;
+            case '0010':
+                return 2;
+            case '0100':
+                return 3;
+            case '1000':
+                return 4;
+            case '0011':
+                return 5;
+            case '0110':
+                return 6;
+            case '1100':
+                return 7;
+            case '0111':
+                return 8;
+            case '1111':
+                return 9;
+            default:
+                return '?';
+        }
+    }
+
+    function checkError(value) {
+        switch (value) {
+            case '10100000000000000000':
+                return 'Internal clock drift too large';
+            case '10101000000000000000':
+                return 'GNSS signal lost';
+            case '10101010000000000000':
+                return 'Initial setup - waiting for GNSS fix';
+            case '10101010100000000000':
+                return 'Initial setup - measuring internal clock drift';
+            case '10101010101000000000':
+                return 'Initial setup - finished';
+            default:
+                return null;
+        }
+    }
+
+
+    const number = document.getElementById("number");
+    let oldValue = '';
+    number.addEventListener("input", (event) => {
+        let error = null;
+        console.log('input event')
+        const value = document.getElementById("value");
+        let v = event.target.value;
+        if (v.length > 20) {
+            number.value = oldValue;
+            return;
+        }
+        for (let i = 0; i < v.length; i++) {
+            if (v[i] !== '0' && v[i] !== '1') {
+                number.value = oldValue;
+                return;
+            }
+        }
+        number.value = v;
+        oldValue = v;
+        v = v.padEnd(20, '0').substring(0, 20);
+        error = checkError(v);
+        if (error) {
+            value.textContent = error;
+            return;
+        }
+
+        let decoded = '';
+        for (let i = 0; i < v.length; i += 4) {
+            const digit = v.substring(i, i + 4);
+            decoded += decodeDigit(digit);
+            if (i === 0) {
+                decoded += '.';
+            }
+        }
+        value.textContent = decoded;
+    });
+</script>
+</body>
+</html>
