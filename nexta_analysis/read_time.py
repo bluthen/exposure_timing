@@ -237,7 +237,15 @@ def get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verb
     :return: A dictionary with row y as key, and value being a list of if LED is on or of 0 or 1
     :rtype: Dict[int, List[bool]] = List[bool]
     """
+    # For millisecond LEDs, we want mean of just them
+    # If ms LED has part on and off, mean should be a good divider for what is on or off, better than led_on_thresh.
+    led_means = {}
+    for led_idx in range(12, 16):
+        led_means[led_idx] = get_poly_values(stretched_image, rois[led_idx]).mean()
+
     timed_rows = {}
+    ms_leds_timed_cols = {12: [], 13: [], 14: [], 15: []}
+
     # For each row with LED in it
     for y in range(y_min, y_max):
         if verbose >= 1:
@@ -263,6 +271,11 @@ def get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verb
                 pmean = poly_values.mean()
                 digit_led = pmean > led_on_thresh
                 row_led_on.append(digit_led)
+                if roi_idx in ms_leds_timed_cols:
+                    if pmean > led_means[roi_idx]:
+                        ms_leds_timed_cols[roi_idx].append(True)
+                    else:
+                        ms_leds_timed_cols[roi_idx].append(False)
             else:
                 break
         # If we have at least 12 that is some value to us
@@ -270,8 +283,8 @@ def get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verb
             timed_rows[y] = row_led_on
     if verbose >= 1:
         print()
-        print('Possible timing rows: '+str(len(timed_rows.keys()))+'/'+str(y_max-y_min))
-    return timed_rows
+        print('Possible timing rows: ' + str(len(timed_rows.keys())) + '/' + str(y_max - y_min))
+    return timed_rows, ms_leds_timed_cols
 
 
 def filter_outliers(timed_rows, fits_header_nextatime, verbose=0):
@@ -303,7 +316,6 @@ def filter_outliers(timed_rows, fits_header_nextatime, verbose=0):
         last_y_value = v
     delta_t = np.array(delta_t)
     increasing = (delta_t > 0).sum() > (delta_t < 0).sum()
-
 
     # Find mean time adjusted for 10s wrap
     vs = []
@@ -367,13 +379,15 @@ def filter_outliers(timed_rows, fits_header_nextatime, verbose=0):
         del timed_rows[y]
 
     if verbose >= 1:
-        print('Filtered rows: ', orig_row_count - len(timed_rows.keys()), 'because mean:', deleted_from_mean, 'because non-monotonic', deleted_non_monotonic)
+        print('Filtered rows: ', orig_row_count - len(timed_rows.keys()), 'because mean:', deleted_from_mean,
+              'because non-monotonic', deleted_non_monotonic)
     return timed_rows, increasing
 
 
-def calculate_stats(timed_rows, increasing, rows, fits_header_nextatime, verbose=0):
+def calculate_stats(rolling_shutter_times, timed_rows, increasing, rows, fits_header_nextatime, verbose=0):
     """
-    Tries to calculates some statistics about our timing, like how off the fits timestamp is, rolling shutter roll readout time, etc.
+    Tries to calculate some statistics about our timing, like how off the fits timestamp is, rolling shutter roll readout time, etc.
+    :param rolling_shutter_times:
     :param timed_rows:
     :param increasing:
     :param rows:
@@ -382,52 +396,37 @@ def calculate_stats(timed_rows, increasing, rows, fits_header_nextatime, verbose
     :return: Dict[str, float]
     """
 
-    # TODO: Even with exposure times greater than 10uS we should be able to infer some timing info
-    # TODO: about rolling shutter by rows of 10^-5 LEDS and exposure time
-    # TODO: Example see Figure 22 in NEXTA paper. LED_blink_time/number_rows_lit
-
-
     last_y = None
     row_deltas = []
     first_err_row = None
     last_err_row = None
     last_v = None
 
+    best_rows = []
     # Generate some stats
     for y in timed_rows.keys():
-        # To try to get rolling shutter time, only use values with 10^-4 or better resolution
-        # maybe this could be an argument, in case using a global shutter camera with longer exposure
+        # For stats, lets try to only use values with 10^-4 or better resolution
+        # TODO: maybe this could be an argument, in case using a global shutter camera with longer exposure
         if timed_rows[y]['err'] <= -4:
-            v = float(timed_rows[y]['value'])
-            orig_v = v
-            if increasing and v < 0.2 and last_v is not None and last_v > 9.8:
-                v += 10.0
-            elif not increasing and v > 9.8 and last_v is not None and last_v < 0.2:
-                v -= 10.0
-            if last_y is not None:
-                tdelta = (v - last_v) / (y - last_y)
-                row_deltas.append(tdelta)
-            else:
-                first_err_row = {'row': y, 'value': float(timed_rows[y]['value'])}
-            last_err_row = {'row': y, 'value': float(timed_rows[y]['value'])}
-            last_y = y
-            last_v = orig_v
-    if verbose >= 1:
-        print(row_deltas)
-    mean_rowtime = np.array(row_deltas).mean()
-    if verbose >= 1:
-        print('Mean rowtime dt:', mean_rowtime)
-    first_last_led_rowtime = (first_err_row['value'] - last_err_row['value']) / (
-            first_err_row['row'] - last_err_row['row'])
-    if verbose >= 1:
-        print('first - last / ydelta:', first_last_led_rowtime)
-    first_pixel_time = last_v - mean_rowtime * last_y
-    last_pixel_time = last_v + mean_rowtime * (rows - last_y)
-    if first_pixel_time < 0 or fits_header_nextatime >= 8 and first_pixel_time <= 2:
-        first_pixel_time = 10 + first_pixel_time
-    if last_pixel_time < 0 or fits_header_nextatime >= 8 and last_pixel_time <= 2:
-        last_pixel_time = 10 + last_pixel_time
-    full_readout_time = last_pixel_time - first_pixel_time
+            best_rows.append({'y': y, 'value': float(timed_rows[y]['value'])})
+
+    rst = np.array(rolling_shutter_times)
+    rst = rst[rst != np.array(None)]
+    rst_mean = None
+    first_pixel_time = None
+    last_pixel_time = None
+    full_readout_time = None
+    if rst.shape[0] > 0:
+        rst_mean = rst.mean()
+        # For now lets just use a middle best row
+        row = best_rows[int(len(best_rows) / 2.0 + 0.5)]
+        first_pixel_time = row['value'] - rst_mean * row['y']
+        last_pixel_time = row['value'] + rst_mean * (rows - row['y'])
+        if first_pixel_time < 0 or fits_header_nextatime >= 8 and first_pixel_time <= 2:
+            first_pixel_time = 10 + first_pixel_time
+        if last_pixel_time < 0 or fits_header_nextatime >= 8 and last_pixel_time <= 2:
+            last_pixel_time = 10 + last_pixel_time
+        full_readout_time = last_pixel_time - first_pixel_time
     if verbose >= 1:
         print('First pixel Time: ', first_pixel_time, 'Last pixel time: ', last_pixel_time, 'Full readout time:',
               full_readout_time)
@@ -435,9 +434,93 @@ def calculate_stats(timed_rows, increasing, rows, fits_header_nextatime, verbose
     if verbose >= 1:
         print('Fits DATE-OBS adjustment needed: ', fits_delta)
 
-    return {'mean_row_time': mean_rowtime, 'first_last_per_row_time': first_last_led_rowtime,
+    return {'rolling_shutter_row_time': rst_mean,
             'calc_first_pixel': first_pixel_time, 'fits_time': fits_header_nextatime, 'fits_delta': fits_delta,
             'calc_last_pixel': last_pixel_time, 'full_readout_time': full_readout_time}
+
+
+def list_has_pattern(ourlist, pattern):
+    pattern_idx = 0
+    # print('list_has_pattner', ourlist, pattern)
+    for item in ourlist:
+        # print('lhp:', item, pattern[pattern_idx])
+        if item == pattern[pattern_idx]:
+            pattern_idx += 1
+            if pattern_idx == len(pattern):
+                return True
+        elif item == pattern[0]:
+            pattern_idx = 1
+            if pattern_idx == len(pattern):
+                return True
+        else:
+            pattern_idx = 0
+    return False
+
+
+def list_has_looping_pattern(ourlist, pattern):
+    for i in range(len(pattern)):
+        if list_has_pattern(ourlist, pattern[i:] + pattern[:i]):
+            return True
+    return False
+
+
+def get_rolling_shutter_times(ms_led_timed_cols, increasing, verbose=0):
+    """
+    Calculates rolling shutter time using millisecond LEDs vertical pattern.
+    :param ms_led_timed_cols:
+    :param increasing:
+    :param verbose:
+    :return:
+    """
+    # As long as the LED has part on and off, mean should be a good divider for what is on or off.
+    # alternate, starting with on. ex, 12 is: 1on, 4off, 1on, 2off, 1on 1off
+    # One complete pattern is 10ms
+    millisecond_patterns = {
+        12: [1, 4, 1, 2, 1, 1],
+        13: [1, 2, 4, 3],
+        14: [1, 2, 2, 1, 2, 2],
+        15: [1, 3, 1, 2, 2, 1]
+    }
+    if not increasing:
+        # If we are not increasing we need to reverse the patterns.
+        for led_idx in millisecond_patterns.keys():
+            millisecond_patterns[led_idx].reverse()
+
+    # The 10^3 LEDS are index 12-15
+    rolling_shutter_times = []
+    for led_idx, pattern in millisecond_patterns.items():
+        # We need to combine all the True and Falses into how many consecutive rows are true and false
+        row_counts = []
+        count = 1
+        last_v = None
+        for row_on in ms_led_timed_cols[led_idx]:
+            if last_v is not None:
+                if row_on == last_v:
+                    count += 1
+                else:
+                    row_counts.append(count)
+                    count = 1
+            last_v = row_on
+        row_counts.append(count)
+        if verbose >= 1:
+            print('MS Pattern counts', led_idx, row_counts)
+        # Lets convert them to patterns
+        # Lets assume max count is max in the pattern
+        unit = max(row_counts) / float(max(millisecond_patterns[led_idx]))
+        row_units = np.array(row_counts) / unit
+        if verbose >= 1:
+            print('MS Pattern Units', led_idx, row_units.tolist())
+        row_units = np.int32(row_units + 0.5)
+        if verbose >= 1:
+            print('MS Patterns Casted', led_idx, row_units)
+        if list_has_looping_pattern(row_units.tolist(), pattern):
+            # Per rolling shutter row time is 1ms/unit
+            rolling_shutter_times.append(0.001 / unit)
+        else:
+            rolling_shutter_times.append(None)
+    if verbose >= 1:
+        print('Rolling Shutter Times:', rolling_shutter_times)
+    return rolling_shutter_times
 
 
 def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
@@ -464,7 +547,7 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
 
     y_min, y_max = get_y_roi_range(rois, verbose)
 
-    timed_rows = get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verbose)
+    timed_rows, ms_leds_timed_cols = get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verbose)
 
     # Decode each row on/off LEDs
     decode_failed_rows = 0
@@ -483,11 +566,12 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
         print('Fits Seconds: ', date_obs, fits_seconds, float(fits_seconds) % 10)
         print('Found ', len(timed_rows.keys()), 'Timing Rows')
 
-
     timed_rows, increasing = filter_outliers(timed_rows, fits_header_nextatime, verbose)
+    rolling_shutter_times = get_rolling_shutter_times(ms_leds_timed_cols, increasing, verbose)
 
     # Calculate rolling shutter time
-    timing_stats = calculate_stats(timed_rows, increasing, stretched_image.shape[0], fits_header_nextatime, verbose)
+    timing_stats = calculate_stats(rolling_shutter_times, timed_rows, increasing, stretched_image.shape[0],
+                                   fits_header_nextatime, verbose)
     with open(output_fn, 'w') as f:
         save_data = {'timed_rows': timed_rows}
         save_data.update(timing_stats)
