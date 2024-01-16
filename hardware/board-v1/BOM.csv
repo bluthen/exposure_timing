@@ -3,4 +3,5 @@ Designation,Part,Link
 "BAR1,BAR2",LTA-1000G,https://www.digikey.com/en/products/detail/liteon/LTA-1000G/153278
 GPS1,UBLOX NEO-7M Module,https://www.ebay.com/sch/i.html?_from=R40&_trksid=p4432023.m570.l1313&_nkw=neo-7m&_sacat=0
 Arduino Due,,https://www.digikey.com/en/products/detail/arduino/A000062/3712582
-,Male .1” headers,https://www.digikey.com/en/products/detail/4-103327-0/A26514-40-ND/297924
+Male Headers to connect between Arduino and PCB,Male .1” headers,https://www.digikey.com/en/products/detail/4-103327-0/A26514-40-ND/297924
+GPS Antenna SMA,,https://www.amazon.com/Bingfu-Waterproof-Navigation-Connector-Tracking/dp/B07R7RC96G/?th=1
