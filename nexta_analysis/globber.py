@@ -23,9 +23,9 @@ import traceback
 
 
 def main_cli():
-    fits_glob_pattern = 'asi1600m-3/Light/aLight_*.fits'
+    fits_glob_pattern = './example_files/aLight*.fits'
     fits_files = glob.glob(fits_glob_pattern)
-    roi_file = 'reg_asi1600m-3_aLight.json'
+    roi_file = 'registration.json'
     i = 0
     for fit_fn in fits_files:
         print(str(i+1) + '/' + str(len(fits_files)), fit_fn, end='\r')
@@ -38,22 +38,19 @@ def main_cli():
     print()
     # Lets load up outputs and do some averaging.
     json_files = glob.glob(os.path.splitext(fits_glob_pattern)[0] + '.json')
-    mean_row_time = []
-    first_last_per_row_time = []
+    rolling_shutter_row_time = []
     fits_delta = []
     full_readout_time = []
     for json_fn in json_files:
         with open(json_fn) as f:
             fjson = json.load(f)
-            mean_row_time.append(fjson['mean_row_time'])
-            first_last_per_row_time.append(fjson['first_last_per_row_time'])
+            rolling_shutter_row_time.append(fjson['rolling_shutter_row_time'])
             fits_delta.append(fjson['fits_delta'])
             full_readout_time.append(fjson['full_readout_time'])
     print(json.dumps(
-        {'mean_row_time': np.array(mean_row_time).mean(),
-         'first_last_per_row_time': np.array(first_last_per_row_time).mean(),
+        {'rolling_shutter_row_time': np.array(rolling_shutter_row_time).mean(),
          'fits_delta': {'min': np.array(fits_delta).min(), 'max': np.array(fits_delta).max(),
-                        'mean': np.array(fits_delta).mean(), 'stdev': np.array(fits_delta).max()},
+                        'mean': np.array(fits_delta).mean(), 'stdev': np.array(fits_delta).std()},
          'full_readout_time': np.array(full_readout_time).mean()}, indent=4))
 
 

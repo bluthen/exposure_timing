@@ -349,7 +349,7 @@ def filter_outliers(timed_rows, fits_header_nextatime, verbose=0):
                     to_del.append(y)
             last_y_value = orig_v
         mean_v = np.array(vs).mean()
-        print(mean_v)
+        # print(mean_v)
 
     deleted_from_mean = len(to_del)
     for y in to_del:
