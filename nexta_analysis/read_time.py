@@ -76,6 +76,24 @@ def get_poly_mask(img, poly):
     return mask
 
 
+def get_poly_rectangle(poly):
+    """
+    Gets x, y of all sides of a rectangle the polygon contains. And adjust polygon
+    :param poly:
+    :return: x1, y1, x2, y2 of area containing polygon, and adjust poly with x1, y1 subtracted
+    """
+    poly = np.array(poly, dtype=np.int32).copy().tolist()
+    zpoly = list(zip(*poly))
+    x1 = min(zpoly[0])
+    x2 = max(zpoly[0])
+    y1 = min(zpoly[1])
+    y2 = max(zpoly[1])
+    for point in poly:
+        point[0] = point[0] - x1
+        point[1] = point[1] - y1
+    return x1, y1, x2, y2, poly
+
+
 def decode_nexta_digit(digit):
     """
     Decodes a NEXTA digit (4 leds)
@@ -273,6 +291,67 @@ def get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verb
                 row_led_on.append(digit_led)
                 if roi_idx in ms_leds_timed_cols:
                     if pmean > led_means[roi_idx]:
+                        ms_leds_timed_cols[roi_idx].append(True)
+                    else:
+                        ms_leds_timed_cols[roi_idx].append(False)
+            else:
+                break
+        # If we have at least 12 that is some value to us
+        if sum(row_led_in) >= 12:
+            timed_rows[y] = row_led_on
+    if verbose >= 1:
+        print()
+        print('Possible timing rows: ' + str(len(timed_rows.keys())) + '/' + str(y_max - y_min))
+    return timed_rows, ms_leds_timed_cols
+
+
+def get_timing_led_rows_faster(y_min, y_max, stretched_image, led_on_thresh, rois, verbose=0):
+    """
+    For rows with LEDS array if leds are on.
+    :param y_min: Lower bound of rows to check
+    :param y_max: Greater bound of rows to check
+    :param stretched_image: Our image stretched
+    :param led_on_thresh: Value that if greater indicate LED is on verses off
+    :param rois: Regions of interest (polygons of leds)
+    :param verbose: How much debugging output to do
+    :return: A dictionary with row y as key, and value being a list of if LED is on or of 0 or 1
+    :rtype: Dict[int, List[bool]] = List[bool]
+    """
+
+    timed_rows = {}
+    ms_leds_timed_cols = {12: [], 13: [], 14: [], 15: []}
+
+    # For each row with LED in it
+    for y in range(y_min, y_max):
+        if verbose >= 1:
+            if y % 50 == 0:
+                print('Checking Row', y, end='\r')
+
+        # Get the values of our the intersection of the line and roi poly
+        # TODO: Might be faster is just the row of values roi masked
+        row_led_in = []
+        row_led_on = []
+        for roi_idx in range(len(rois) - 1):
+            # For each point if row is in the poly.
+            px1, py1, px2, py2, ppoly = get_poly_rectangle(rois[roi_idx])
+            # Is LED on row
+            in_row = py1 <= y < py2
+            row_led_in.append(in_row)
+            if in_row:
+                stretched_image_prect = stretched_image[py1:py2, px1:px2]
+                poly_mask = get_poly_mask(stretched_image_prect, ppoly)
+                linemask = np.zeros_like(stretched_image_prect)
+                linemask[y - py1] = np.ones(stretched_image_prect.shape[1])
+                linemask = linemask > 0
+                and_mask = np.logical_and(linemask, poly_mask)
+                poly_values = stretched_image_prect[and_mask]
+                pmean = poly_values.mean()
+                digit_led = pmean > led_on_thresh
+                row_led_on.append(digit_led)
+                if roi_idx in ms_leds_timed_cols:
+                    # If ms LED has part on and off, mean should be a good divider for what is on or off, better than led_on_thresh.
+                    led_mean = get_poly_values(stretched_image_prect, ppoly).mean()
+                    if pmean > led_mean:
                         ms_leds_timed_cols[roi_idx].append(True)
                     else:
                         ms_leds_timed_cols[roi_idx].append(False)
@@ -547,7 +626,8 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
 
     y_min, y_max = get_y_roi_range(rois, verbose)
 
-    timed_rows, ms_leds_timed_cols = get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verbose)
+    timed_rows, ms_leds_timed_cols = get_timing_led_rows_faster(y_min, y_max, stretched_image, led_on_thresh, rois,
+                                                                verbose)
 
     # Decode each row on/off LEDs
     decode_failed_rows = 0
