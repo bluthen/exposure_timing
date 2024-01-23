@@ -18,7 +18,37 @@ from astropy.io import fits
 import json
 import cv2
 import numpy as np
+import math
 from auto_stretch.stretch import Stretch
+
+
+def open_fits(fits_filename):
+    """
+    Returns mono image data or green channel if bayer or multi channel fits. Also DATE-OBS, EXPTIME values
+    :param fits_filename: Path to fits image.
+    :return: single channel img, DATE-OBS, EXPTIME values
+    """
+    fitsimg = fits.open(fits_filename)
+    img = fitsimg[0].data
+    if len(img.shape) == 3 and img.shape[0] == 3:
+        # Assume RGB
+        # Use green channel
+        img = img[1]
+    elif 'BAYERPAT' in fitsimg[0].header:
+        # Just use G channel
+        pattern = fitsimg[0].header['BAYERPAT'].strip()
+        xoffset = fitsimg[0].header.get('XBAYROFF', 0)
+        yoffset = fitsimg[0].header.get('YBAYOFF', 0)
+        if pattern == 'RGGB':
+            img = cv2.cvtColor(img, cv2.COLOR_BayerBG2RGB)[:, :, 1]
+        elif pattern == 'GRBG':
+            img = cv2.cvtColor(img, cv2.COLOR_BayerGB2RGB)[:, :, 1]
+        elif pattern == 'BGGR':
+            img = cv2.cvtColor(img, cv2.COLOR_BayerRG2RGB)[:, :, 1]
+        elif pattern == 'GBRG':
+            img = cv2.cvtColor(img, cv2.COLOR_BayerGR2RGB)[:, :, 1]
+
+    return img, fitsimg[0].header['DATE-OBS'], fitsimg[0].header['EXPTIME']
 
 
 def scale_imshow(name, img, scale, interpolation=cv2.INTER_AREA):
@@ -166,14 +196,16 @@ def booleanlist_to_string(ourlist, truechar='1', falsechar='0'):
     return ourstr
 
 
-def decode_nexta_time(led_values):
+def decode_nexta_time(led_values, exptime):
     """
     Decodes full array of LED values into a time value.
     :param led_values:
+    :param exptime:
     :return: value, led_count, err (maybe least significant figure, exponent)
     :rtype: Dict
     """
     decoded = ''
+    best_err = int(math.log(exptime)/math.log(10))
     sled_values = booleanlist_to_string(led_values).ljust(20, '0')
     err, reason = nexta_check_error(sled_values)
     if err:
@@ -182,12 +214,18 @@ def decode_nexta_time(led_values):
         digit = str(decode_nexta_digit(sled_values[i:i + 4]))
         if digit == '?':
             err = max(-1 * int(len(led_values) / 4.0), -1 * i)
+            if err < best_err:
+                err = best_err
+                decoded = decoded[0:-1*err+2]
             return {'value': decoded, 'err': err, 'led_count': len(led_values),
                     'lsb': booleanlist_to_string(list(led_values[i:]))}
         decoded += digit
         if i == 0:
             decoded += '.'
     err = -1 * int(len(led_values) / 4.0)
+    if err < best_err:
+        err = best_err
+    decoded = decoded[0:-1*err+2]
     return {'value': decoded, 'led_count': len(led_values), 'err': err}
 
 
@@ -509,11 +547,25 @@ def calculate_stats(rolling_shutter_times, timed_rows, increasing, rows, fits_he
     if verbose >= 1:
         print('First pixel Time: ', first_pixel_time, 'Last pixel time: ', last_pixel_time, 'Full readout time:',
               full_readout_time)
-    fits_delta = first_pixel_time - fits_header_nextatime
+    # If first_pixel_time is None, either we have bad data, or is global shutter.
+    if first_pixel_time is None:
+        shutter_type = 'GLOBAL'
+        # If global shutter we'll use some middle timed row
+        timed_rows_list = list(timed_rows.values())
+        first_pixel_time = float(timed_rows_list[int(len(timed_rows_list) / 2.0 + 0.5)]['value'])
+        last_pixel_time = first_pixel_time
+        if first_pixel_time < 0 or fits_header_nextatime >= 8 and first_pixel_time <= 2:
+            first_pixel_time = 10 + first_pixel_time
+        if last_pixel_time < 0 or fits_header_nextatime >= 8 and last_pixel_time <= 2:
+            last_pixel_time = 10 + last_pixel_time
+        fits_delta = first_pixel_time - fits_header_nextatime
+    else:
+        shutter_type = 'ROLLING'
+        fits_delta = first_pixel_time - fits_header_nextatime
     if verbose >= 1:
         print('Fits DATE-OBS adjustment needed: ', fits_delta)
 
-    return {'rolling_shutter_row_time': rst_mean,
+    return {'shutter_type': shutter_type, 'rolling_shutter_row_time': rst_mean,
             'calc_first_pixel': first_pixel_time, 'fits_time': fits_header_nextatime, 'fits_delta': fits_delta,
             'calc_last_pixel': last_pixel_time, 'full_readout_time': full_readout_time}
 
@@ -607,14 +659,12 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
         rois = json.load(f)
 
     # TODO: Support multichannel/bayer images
-    fitsimg = fits.open(fits_path)
-    img = fitsimg[0].data
+    img, date_obs, exptime = open_fits(fits_path)
     stretched_image = np.uint8(Stretch().stretch(img) * 255)
     if dscale > 0:
         dscale = dscale
     else:
         dscale = 1000 / max(stretched_image.shape)
-    date_obs = fitsimg[0].header['DATE-OBS']
 
     if verbose >= 2:
         scale_imshow('debug', stretched_image, dscale)
@@ -632,7 +682,7 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
     # Decode each row on/off LEDs
     decode_failed_rows = 0
     for y in list(timed_rows.keys()):
-        timed_rows[y] = decode_nexta_time(timed_rows[y])
+        timed_rows[y] = decode_nexta_time(timed_rows[y], exptime)
         if timed_rows[y] is None:
             decode_failed_rows += 1
             del timed_rows[y]
