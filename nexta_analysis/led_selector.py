@@ -361,9 +361,7 @@ def main():
     args = parser.parse_args()
     imgname = args.reference_image
     # img = cv2.imread(sys.argv[1])
-    fitsimg = fits.open(imgname)
-    img = fitsimg[0].data
-    # TODO: Be able to handle multi channel, and bayer matrix images.
+    img = read_time.open_fits(imgname)[0]
     stretched_img = np.uint8(Stretch().stretch(img)*255)
     if args.scale > 0:
         scale = args.scale
