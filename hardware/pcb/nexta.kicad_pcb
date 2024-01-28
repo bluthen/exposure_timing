@@ -7,8 +7,8 @@
   (paper "USLetter")
   (title_block
     (title "Timing Board")
-    (date "2024-01-20")
-    (rev "2.0.0")
+    (date "2024-01-27")
+    (rev "2.1.0")
   )
 
   (layers
@@ -2369,6 +2369,8 @@
     )
   )
 
+  (gr_line (start 171.613 80.837) (end 170.633 80.837)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 01f5e3dd-5dcc-4592-b4c7-5c2201421b1d))
   (gr_line (start 185.25 80.935) (end 184.77 80.455)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 0e7c148c-58c6-49db-8b4c-9eb0cc4422d5))
   (gr_line (start 185.215 80.935) (end 184.805 81.345)
@@ -2385,6 +2387,10 @@
     )
 
     (stroke (width 0.15) (type solid)) (fill none) (layer "F.SilkS") (tstamp 2ef66f71-502c-4ed8-82c1-616bc8cfb2f6))
+  (gr_line (start 170.408 83.442) (end 170.708 83.142)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 2fdb21d1-7e0b-4652-b87f-25de9bbc096d))
+  (gr_line (start 171.638 83.432) (end 170.568 83.432)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 31b22832-e220-483e-8186-b6df31899398))
   (gr_line (start 154.91 96.58) (end 154.91 93.28)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 369f38bd-4e2f-424f-8802-127dfc233522))
   (gr_line (start 185.095 80.925) (end 184.115 80.925)
@@ -2393,6 +2399,10 @@
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 70202310-2010-4b62-87dc-ef7258dc5a2a))
   (gr_line (start 183.89 83.53) (end 184.19 83.23)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 70ef521a-761e-488f-9e85-e10fdd7af98c))
+  (gr_line (start 171.768 80.847) (end 171.288 80.367)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp 81674254-e85c-4002-819b-f1672a344435))
+  (gr_line (start 170.388 83.442) (end 170.728 83.782)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp a65393e6-0a8f-4fce-a034-950fb5037dfe))
   (gr_line (start 105.73 80.21) (end 105.73 96.69)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp a7c08e6c-050b-4060-aa84-70460b1a3a4c))
   (gr_line (start 133.56 96.58) (end 133.56 93.28)
@@ -2405,6 +2415,8 @@
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp d8e8dadb-36c9-43af-971f-aae428af679e))
   (gr_line (start 110.9 80.09) (end 110.9 96.75)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp e8e002ce-1f14-48cf-9549-c4d1ecfd7459))
+  (gr_line (start 171.733 80.847) (end 171.323 81.257)
+    (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp e92e5a91-0dce-4dc6-a728-478715821a4c))
   (gr_line (start 113.45 80.09) (end 113.45 96.55)
     (stroke (width 0.15) (type default)) (layer "F.SilkS") (tstamp e97fe8cd-3c38-4fb5-a9b5-8566f58ccf12))
   (gr_poly
@@ -2426,6 +2438,9 @@
   (gr_text "T" (at 184.099048 80.395) (layer "F.SilkS") (tstamp 18e16b05-035d-4362-a491-36646264baa4)
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
+  (gr_text "T" (at 170.617048 80.307) (layer "F.SilkS") (tstamp 21b8aa08-b9a3-4c16-8902-4e176c0237bb)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
   (gr_text "1s" (at 116.7 95.62) (layer "F.SilkS") (tstamp 24835127-78d3-4d45-acc2-0f68a8ac6f31)
     (effects (font (size 1.5 1.5) (thickness 0.15)) (justify left bottom))
   )
@@ -2436,6 +2451,9 @@
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
   (gr_text "G" (at 183.98 85.89) (layer "F.SilkS") (tstamp 76aa1915-1f97-436c-86be-f5a208010d7e)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "V" (at 170.688 88.392) (layer "F.SilkS") (tstamp 774c1495-4f75-4d7c-9509-5007b14d748d)
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
   (gr_text "9  X  X  X  X\n8     X  X  X\n7  X  X\n6     X  X\n5        X  X\n4  X\n3     X\n2        X\n1           X\n0" (at 104.16 96.75) (layer "F.SilkS") (tstamp 7bb551bc-258b-4067-9eaf-f204322c04d4)
@@ -3248,7 +3266,7 @@
       )
     )
   )
-  (gr_text "Timing Board\nv2.0.0" (at 170.13 70.92) (layer "F.SilkS") (tstamp 88356c7d-a889-4779-95e0-9d2d10aa486f)
+  (gr_text "Timing Board\nv2.1.0" (at 170.13 70.92) (layer "F.SilkS") (tstamp 88356c7d-a889-4779-95e0-9d2d10aa486f)
     (effects (font (size 1.5 1.5) (thickness 0.15)) (justify left bottom))
   )
   (gr_text "X X - drift too large\nX X X - GPS lost\nX X X X - initial setup\nX X X X X - waiting GPS\nX X X X X X - measuring dift\nX X X X X X X - init finish" (at 143.2 74.79) (layer "F.SilkS") (tstamp 88753db5-578f-4833-9e38-4672f5c84ffa)
@@ -3259,6 +3277,15 @@
   )
   (gr_text "0.001s" (at 146.25 95.62) (layer "F.SilkS") (tstamp 9b80af0f-7c26-4e56-99d7-14aef4032b1a)
     (effects (font (size 1.5 1.5) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "R" (at 170.478 83.042) (layer "F.SilkS") (tstamp b99008b9-2b77-465e-bad8-0964a3267d08)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "P" (at 170.708 78.072) (layer "F.SilkS") (tstamp cfb2b362-aa3e-4f1f-b89c-6bfb440be761)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "G" (at 170.498 85.802) (layer "F.SilkS") (tstamp e0598abb-3621-4abb-a924-18d121333c8d)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
   (gr_text "0.1s" (at 126.25 95.62) (layer "F.SilkS") (tstamp e3be9fee-d3a7-4e48-95e2-51dc1d3932c4)
     (effects (font (size 1.5 1.5) (thickness 0.15)) (justify left bottom))
@@ -3542,6 +3569,36 @@
   (segment (start 181.73 75.77) (end 181.73 85.38) (width 0.8128) (layer "F.Cu") (net 102) (tstamp c8334d40-8dd3-4ade-8122-1be96f706249))
   (segment (start 175.89 73.56) (end 179.52 73.56) (width 0.8128) (layer "F.Cu") (net 102) (tstamp e34c15e9-1dc5-4502-b018-8c95a4f3ba80))
 
+  (group "" (id c10f6015-f48a-4ac6-840c-ff16c6991f45)
+    (members
+      01f5e3dd-5dcc-4592-b4c7-5c2201421b1d
+      21b8aa08-b9a3-4c16-8902-4e176c0237bb
+      2fdb21d1-7e0b-4652-b87f-25de9bbc096d
+      31b22832-e220-483e-8186-b6df31899398
+      774c1495-4f75-4d7c-9509-5007b14d748d
+      81674254-e85c-4002-819b-f1672a344435
+      a65393e6-0a8f-4fce-a034-950fb5037dfe
+      b99008b9-2b77-465e-bad8-0964a3267d08
+      cfb2b362-aa3e-4f1f-b89c-6bfb440be761
+      e0598abb-3621-4abb-a924-18d121333c8d
+      e92e5a91-0dce-4dc6-a728-478715821a4c
+    )
+  )
+  (group "" (id cc2358df-c3c0-4435-880f-415965676f03)
+    (members
+      0e7c148c-58c6-49db-8b4c-9eb0cc4422d5
+      18e16b05-035d-4362-a491-36646264baa4
+      204d4108-8787-4a29-8eee-7ee343a9320e
+      3ab6a791-a4f0-445c-90c1-2aa3bb964b29
+      5813609c-ccd0-47eb-84c3-9fafeb715982
+      599edab4-47b0-4cc8-8c46-1eac81adc087
+      70ef521a-761e-488f-9e85-e10fdd7af98c
+      76aa1915-1f97-436c-86be-f5a208010d7e
+      8c0ee9f5-6f68-4da8-a230-19c527a90092
+      c34b56b9-ba48-4c5f-b63e-4c17e58bb2ff
+      d8e8dadb-36c9-43af-971f-aae428af679e
+    )
+  )
   (group "" (id db5985d9-4c55-4732-8612-e0d7ed737261)
     (members
       24ca3f90-87d2-49f4-915a-92ea545210e3
