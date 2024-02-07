@@ -205,7 +205,7 @@ def decode_nexta_time(led_values, exptime):
     :rtype: Dict
     """
     decoded = ''
-    best_err = int(math.log(exptime)/math.log(10))
+    best_err = int(math.log(exptime) / math.log(10))
     sled_values = booleanlist_to_string(led_values).ljust(20, '0')
     err, reason = nexta_check_error(sled_values)
     if err:
@@ -216,7 +216,7 @@ def decode_nexta_time(led_values, exptime):
             err = max(-1 * int(len(led_values) / 4.0), -1 * i)
             if err < best_err:
                 err = best_err
-                decoded = decoded[0:-1*err+2]
+                decoded = decoded[0:-1 * err + 2]
             return {'value': decoded, 'err': err, 'led_count': len(led_values),
                     'lsb': booleanlist_to_string(list(led_values[i:]))}
         decoded += digit
@@ -225,7 +225,7 @@ def decode_nexta_time(led_values, exptime):
     err = -1 * int(len(led_values) / 4.0)
     if err < best_err:
         err = best_err
-    decoded = decoded[0:-1*err+2]
+    decoded = decoded[0:-1 * err + 2]
     return {'value': decoded, 'led_count': len(led_values), 'err': err}
 
 
@@ -654,24 +654,7 @@ def get_rolling_shutter_times(ms_led_timed_cols, increasing, verbose=0):
     return rolling_shutter_times
 
 
-def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
-    with open(roi_json_path) as f:
-        rois = json.load(f)
-
-    # TODO: Support multichannel/bayer images
-    img, date_obs, exptime = open_fits(fits_path)
-    stretched_image = np.uint8(Stretch().stretch(img) * 255)
-    if dscale > 0:
-        dscale = dscale
-    else:
-        dscale = 1000 / max(stretched_image.shape)
-
-    if verbose >= 2:
-        scale_imshow('debug', stretched_image, dscale)
-        cv2.waitKey(10000)
-    if verbose >= 1:
-        print('stretched_image', stretched_image.shape, stretched_image.dtype)
-
+def readtime(stretched_image, rois, date_obs, exptime, dscale=-1, verbose=0):
     led_on_thresh = get_led_on_threshold(rois, stretched_image, dscale, verbose)
 
     y_min, y_max = get_y_roi_range(rois, verbose)
@@ -702,9 +685,32 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
     # Calculate rolling shutter time
     timing_stats = calculate_stats(rolling_shutter_times, timed_rows, increasing, stretched_image.shape[0],
                                    fits_header_nextatime, verbose)
+    save_data = {'timed_rows': timed_rows}
+    save_data.update(timing_stats)
+    return save_data
+
+
+def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
+    with open(roi_json_path) as f:
+        rois = json.load(f)
+
+    # TODO: Support multichannel/bayer images
+    img, date_obs, exptime = open_fits(fits_path)
+    stretched_image = np.uint8(Stretch().stretch(img) * 255)
+    if dscale > 0:
+        dscale = dscale
+    else:
+        dscale = 1000 / max(stretched_image.shape)
+
+    if verbose >= 2:
+        scale_imshow('debug', stretched_image, dscale)
+        cv2.waitKey(10000)
+    if verbose >= 1:
+        print('stretched_image', stretched_image.shape, stretched_image.dtype)
+
+    save_data = readtime(stretched_image, rois, date_obs, exptime, dscale, verbose)
+
     with open(output_fn, 'w') as f:
-        save_data = {'timed_rows': timed_rows}
-        save_data.update(timing_stats)
         json.dump(save_data, f, indent=4)
 
 

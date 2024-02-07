@@ -12,7 +12,7 @@ Current GUI is provided by opencv, but we'll quickly need to move to another too
 cd nexta_analysis
 poetry install
 poetry shell
-python led_selector.py -i ./example_files/registration_image.fits -o registration.json
+python led_selector.py -i ./example_files/registration_image.fits -o ./example_files/registration.etreg
 ```
 
 You should see the following:
@@ -21,7 +21,7 @@ You should see the following:
 You can then try to get timing information.
 
 ```bash
-python read_time.py -r registration.json -o aLight_010-timing.json -i ./example_files/aLight_010.fits
+python read_time.py -r ./example_files/registration.etreg -o ./example_files/aLight_010.ettime -i ./example_files/aLight_010.fits
 ```
 
 
