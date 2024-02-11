@@ -17,19 +17,7 @@ import numpy as np
 import threading
 from auto_stretch.stretch import Stretch
 
-
-def method_debounce(method, wait):
-    timer: None | threading.Timer = None
-
-    def debounced(*args, **kwargs):
-        nonlocal timer, method, wait
-        if timer:
-            timer.cancel()
-            timer = None
-        timer = threading.Timer(wait, method, args, kwargs)
-        timer.start()
-
-    return debounced
+from NACanvas import NACanvas
 
 
 class ReadTimeGUI:
@@ -77,19 +65,13 @@ class ReadTimeGUI:
         self.__master.config(menu=menubar)
 
     def __setup_canvas(self):
-        def on_canvas_resize(event):
-            nonlocal self
-            self.run_in_gui(self.__update_image)
 
         self.__frame = Frame(self.__master)
         self.__frame.pack(fill=BOTH, expand=True)
 
-        self.__canvas = Canvas(self.__frame, bg='pink')
-        self.__canvas.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
-        # self.__canvas.grid(row=0, column=0)
-        self.__canvas.rowconfigure(0, weight=1)
-        self.__on_canvas_resize = method_debounce(on_canvas_resize, .2)
-        self.__canvas.bind('<Configure>', self.__on_canvas_resize)
+        self.__canvas = NACanvas(self, self.__frame)
+        self.__canvas.bind('<ROISDone>', self.__on_rois_done)
+        self.__canvas.bind('<ROIAbort>', self.__on_rois_abort)
         self.__frame2 = Frame(self.__frame, width=300)
         self.__frame2.pack(side=tkinter.RIGHT)
         self.__dateobs_strvar = StringVar()
@@ -198,6 +180,7 @@ class ReadTimeGUI:
 
         def success(w):
             self.__state['image']['working'] = w
+            self.__canvas.set_image(w)
             self.__state['registration'] = {'path': path, 'name': os.path.basename(path), 'data': reg_json}
             self.actionmenu.entryconfig('Read Time', state=tkinter.NORMAL)
             self.filemenu.entryconfig("Save Registration As", state=tkinter.NORMAL)
@@ -209,22 +192,7 @@ class ReadTimeGUI:
         if self.__state['image']['working'] is None:
             return
         self.__set_statusbar("Resizing to canvas...")
-        cwidth = self.__canvas.winfo_width()
-        cheight = self.__canvas.winfo_height()
-        # print('D: ', self.__state['image']['working'].shape)
-        img = Image.fromarray(self.__state['image']['working'], mode='RGB')
-        isize = img.size
-        wscale = cwidth / isize[0]
-        hscale = cheight / isize[1]
-        s = min([wscale, hscale])
-        self.__last_canvasscale = s
-        img = img.resize((int(s * isize[0]), int(s * isize[1])), Image.BICUBIC)
-        # print(img.size)
-        image = ImageTk.PhotoImage(image=img)
-        self.__canvas.delete('all')
-        self.__canvas.image = image
-        self.__canvas.create_image(0, 0, anchor='nw', image=image)
-        self.__canvas.pack(fill=BOTH, expand=True)
+        self.__canvas.refresh_canvas()
         self.__set_statusbar('')
 
     def __error_dialog(self, message):
@@ -267,6 +235,7 @@ class ReadTimeGUI:
         self.__state['image']['EXPTIME'] = exptime
         self.__state['image']['data'] = data
         self.__state['image']['working'] = working
+        self.__canvas.set_image(working)
         self.actionmenu.entryconfig('Auto-register', state=tkinter.NORMAL)
         self.actionmenu.entryconfig('Manual-register', state=tkinter.NORMAL)
         self.filemenu.entryconfig("Save Registration As", state=tkinter.DISABLED)
@@ -287,17 +256,22 @@ class ReadTimeGUI:
         self.__set_statusbar('Running autoregister...')
         self.run_in_work(autoregister, success, error, self.__state['image']['data'])
 
+    def __on_rois_done(self, polygons):
+        self.__state['registration']['data'] = polygons
+        self.__update_overlay(polygons, self.__state['image']['data'], 'memory')
+
+    def __on_rois_abort(self):
+        self.__set_statusbar('')
+
     def __manualregister(self):
         tkinter.messagebox.showinfo(title='Manual Register',
-                                    message='In the new window. outline one LED at a time. To close the outline, '
-                                            'double clicking. Start with first seconds LEDs and move in order to 0.1ms '
-                                            'leds. Press ESC to abort.')
-        manual_roi_img = cv2.cvtColor(self.__state['image']['data'], cv2.COLOR_GRAY2BGR)
-        manual_roi_img = cv2.resize(manual_roi_img, (0, 0), fx=self.__last_canvasscale, fy=self.__last_canvasscale)
-        registration = led_selector.select_rois_easyroi_poly(manual_roi_img, self.__last_canvasscale)
-        cv2.destroyAllWindows()
-        self.__state['registration']['data'] = registration
-        self.__update_overlay(registration, self.__state['image']['data'], 'memory')
+                                    message='Outline one LED at a time. '
+                                            'To close the outline, right click. '
+                                            'Start with the first "seconds" LEDs and move in order to the 0.1ms LEDs. '
+                                            'Press ESC key to abort.')
+        self.__set_statusbar('ROI Mode| Select polygons')
+        self.__state['registration'] = {'path': None, 'name': None, 'data': None}
+        self.__canvas.set_roi_mode(True)
 
     def __readtime(self):
         def error(e):
