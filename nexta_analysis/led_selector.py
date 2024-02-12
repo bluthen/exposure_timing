@@ -15,20 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os.path
-import sys
+import json
+import math
 import traceback
 
 import cv2
-import json
-import copy
-from astropy.io import fits
-import math
-import read_time
+import numpy as np
+from auto_stretch.stretch import Stretch
 
 import aruco_detect
-from auto_stretch.stretch import Stretch
-import numpy as np
+import debug_show
+import read_time
 
 # Each board with different spacing should have different ARUCO markers ids to identify them automatically.
 # IDs_ARRAY: {version:
@@ -58,38 +55,6 @@ BOARDS = {
         }
     }
 }
-
-
-def scale_roi2(roi, scale):
-    """
-    Scales easyroi polygons so coordinates match full sized image.
-    :param roi:
-    :param scale:
-    :return:
-    """
-    rois = []
-    for i in range(len(roi['roi'])):
-        rois.append([])
-        for j in range(len(roi['roi'][i]['vertices'])):
-            vert = roi['roi'][i]['vertices'][j]
-            rois[i].append([int(vert[0] * scale + 0.5), int(vert[1] * scale + 0.5)])
-    return rois
-
-
-def select_rois_easyroi_poly(rimg, scale):
-    """
-    Manual method to get LED polygons.
-    :param rimg:
-    :param scale:
-    :return:
-    """
-    from EasyROI import EasyROI
-    roi_helper = EasyROI(verbose=True)
-    print("Select from most significant")
-    roi = roi_helper.draw_polygon(rimg, 20)
-    print('ROI:', roi)
-    rois = scale_roi2(roi, 1.0 / scale)
-    return rois
 
 
 def shrink_line_remove_mark(line, px_per_mm, marker_mm):
@@ -159,8 +124,8 @@ def get_aruco_points(img, dscale, verbose=0):
             mark = arucos[k]
             cv2.circle(debug_img, np.int32(np.array(mark['center'])), int(5 / dscale), (0, 0, 255), -1)
         cv2.aruco.drawDetectedMarkers(debug_img, debug_info[0], debug_info[1])
-        read_time.scale_imshow('debug', debug_img, dscale)
-        cv2.waitKey(10000)
+        debug_show.show('debug', debug_img)
+        debug_show.wait(10000)
     if str(ids) not in BOARDS:
         raise Exception('Unable to find board with detected markers: ' + str(ids))
     return arucos, ids
@@ -191,8 +156,8 @@ def get_led_roi(arucos, ids, img, dscale, verbose=0):
     if verbose >= 2:
         debug_img = cv2.cvtColor(np.float32(img), cv2.COLOR_GRAY2BGR)
         cv2.polylines(debug_img, [np.array(rect).reshape((-1, 1, 2))], True, (255, 0, 0), int(2 / dscale))
-        read_time.scale_imshow('debug', debug_img, dscale)
-        cv2.waitKey(10000)
+        debug_show.show('debug', debug_img)
+        debug_show.wait(10000)
 
     return roi_mask, roi_line, roi_px_per_mm, rect
 
@@ -233,15 +198,15 @@ def get_contours(roi_image, roi_mean, img, dscale, verbose=0):
     # Since ROI is LEDs and LED bar border, the mean should be a good way to serperate them.
     test_edge_thresh = cv2.threshold(np.uint8(roi_image), roi_mean, 255, cv2.THRESH_BINARY)[1]
     if verbose >= 2:
-        read_time.scale_imshow('debug', test_edge_thresh, dscale)
-        cv2.waitKey(10000)
+        debug_show.show('debug', test_edge_thresh)
+        debug_show.wait(10000)
     contours, hierarchy = cv2.findContours(test_edge_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if verbose >= 2:
         debug_img = cv2.cvtColor(np.float32(img), cv2.COLOR_GRAY2BGR)
 
-        cv2.drawContours(debug_img, contours, -1, (0, 255, 0), int(3/dscale))
-        read_time.scale_imshow('debug', debug_img, dscale)
-        cv2.waitKey(10000)
+        cv2.drawContours(debug_img, contours, -1, (0, 255, 0), int(3 / dscale))
+        debug_show.show('debug', debug_img)
+        debug_show.wait(10000)
     return contours
 
 
@@ -310,20 +275,21 @@ def find_ordered_LED_polypoints(img, dscale, verbose=0):
             points.append(p[0].tolist())
         ourled['points'] = points
         if verbose >= 2:
-            cv2.circle(debug_img, np.int32(ourled['centroid']), int(5/dscale), (255, 0, 255), -1)
-            cv2.polylines(debug_img, [poly.reshape((-1, 1, 2))], True, (255, 0, 255), int(2/dscale + 0.5))
+            cv2.circle(debug_img, np.int32(ourled['centroid']), int(5 / dscale), (255, 0, 255), -1)
+            cv2.polylines(debug_img, [poly.reshape((-1, 1, 2))], True, (255, 0, 255), int(2 / dscale + 0.5))
             text = ('-' if place > 0 else '') + str(place) + chr(97 + subplace)
             uzpoints = list(zip(*points))
             pos = [min(uzpoints[0]), min(uzpoints[1])]
-            cv2.putText(debug_img, text, pos, cv2.FONT_HERSHEY_COMPLEX, .4/dscale, (255, 255, 0), int(1/dscale + 0.5), cv2.LINE_AA)
+            cv2.putText(debug_img, text, pos, cv2.FONT_HERSHEY_COMPLEX, .4 / dscale, (255, 255, 0),
+                        int(1 / dscale + 0.5), cv2.LINE_AA)
         subplace += 1
         if subplace == 4:
             place += 1
             subplace = 0
 
     if verbose >= 2:
-        read_time.scale_imshow('debug', debug_img, dscale)
-        cv2.waitKey(10000)
+        debug_show.show('debug', debug_img)
+        debug_show.wait(10000)
     # Make our array of ordered poly points.
     ret = [ourled['points'] for ourled in ourleds]
     return ret
@@ -342,11 +308,12 @@ def draw_ordered_led_polys(img, points, dscale):
     place = 0
     subplace = 0
     for poly in points:
-        cv2.polylines(debug_img, [np.array(poly).reshape((-1, 1, 2))], True, (255, 0, 255), int(2/dscale))
+        cv2.polylines(debug_img, [np.array(poly).reshape((-1, 1, 2))], True, (255, 0, 255), int(2 / dscale))
         text = ('-' if place > 0 else '') + str(place) + chr(97 + subplace)
         uzpoints = list(zip(*poly))
         pos = [min(uzpoints[0]), min(uzpoints[1])]
-        cv2.putText(debug_img, text, pos, cv2.FONT_HERSHEY_COMPLEX, .4/dscale, (255, 255, 0), int(1/dscale), cv2.LINE_AA)
+        cv2.putText(debug_img, text, pos, cv2.FONT_HERSHEY_COMPLEX, .4 / dscale, (255, 255, 0), int(1 / dscale),
+                    cv2.LINE_AA)
         subplace += 1
         if subplace == 4:
             place += 1
@@ -364,40 +331,33 @@ def main():
     parser.add_argument('--output', '-o', required=True, type=str, help='Output of Registration data')
     parser.add_argument('--scale', '-s', type=float, required=False, default=-1,
                         help='How much to scale manual area selection image or debug images, defaults to an calculated reasonable value to fit on screen')
-    parser.add_argument('--manual', '-m', action=argparse.BooleanOptionalAction, default=False, help="Don't even try to manually detect LEDs go straight to manual mode first.")
     parser.add_argument('--verbose', '-v', action='count', default=0,
                         help='How much debug info, -v for text, -vv for graphical debug info')
     args = parser.parse_args()
     imgname = args.reference_image
     # img = cv2.imread(sys.argv[1])
     img = read_time.open_fits(imgname)[0]
-    stretched_img = np.uint8(Stretch().stretch(img)*255)
+    stretched_img = np.uint8(Stretch().stretch(img) * 255)
     if args.scale > 0:
         scale = args.scale
     else:
         scale = 1000 / max(img.shape)
     led_poly_points = []
     try:
-        if not args.manual:
-            led_poly_points = find_ordered_LED_polypoints(stretched_img, scale, args.verbose)
+        led_poly_points = find_ordered_LED_polypoints(stretched_img, scale, args.verbose)
     except Exception as e:
         if args.verbose >= 1:
             traceback.print_exception(e)
     if args.verbose >= 1:
         print('Number of polys:', len(led_poly_points))
     if len(led_poly_points) != 20:
-        print(
-            'Was not able to auto find LED bar graph, manually select each LED in order from seconds to 10^-4 seconds')
-        print('Double click to close the polygon and select the next one.')
-        manual_roi_img = cv2.cvtColor(stretched_img, cv2.COLOR_GRAY2BGR)
-        manual_roi_img = cv2.resize(manual_roi_img, (0, 0), fx=scale, fy=scale)
-        led_poly_points = select_rois_easyroi_poly(manual_roi_img, scale)
+        raise (Exception('Not able to auto detect LED bar graph, using GUI to manually make registration file.'))
     with open(args.output, 'w') as f:
         json.dump(led_poly_points, f)
     # Lets show the final result.
     pimg = draw_ordered_led_polys(stretched_img, led_poly_points, scale)
-    read_time.scale_imshow('complete', pimg, scale)
-    cv2.waitKey(20000)
+    debug_show.show('complete', pimg)
+    debug_show.wait(20000)
     print('Done.')
 
 

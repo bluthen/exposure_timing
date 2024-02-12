@@ -1,22 +1,36 @@
+# Exposure Timing - NEXTA Analysis
+# Copyright (C) 2024 Russell Valentine
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import json
 import os.path
-import traceback
-import tkinter
-from tkinter import Tk, Menu, filedialog, Canvas, BOTH, Frame, messagebox, Label, StringVar, Entry
+import pathlib
 import queue
 import sys
-import json
-import sigfig
-import pathlib
+import threading
+import tkinter
+import traceback
+from tkinter import Tk, Menu, filedialog, BOTH, Frame, messagebox, Label, StringVar, Entry
 
 import cv2
+import numpy as np
+import sigfig
+from auto_stretch.stretch import Stretch
 
 import led_selector
 import read_time
-from PIL import Image, ImageTk
-import numpy as np
-import threading
-from auto_stretch.stretch import Stretch
-
 from NACanvas import NACanvas
 
 

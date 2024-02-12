@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Exposure Timing - NEXTA Analysis
 # Copyright (C) 2024 Russell Valentine
 #
@@ -14,12 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from astropy.io import fits
 import json
+import math
+
 import cv2
 import numpy as np
-import math
+from astropy.io import fits
 from auto_stretch.stretch import Stretch
+
+import debug_show
 
 
 def open_fits(fits_filename):
@@ -51,25 +55,6 @@ def open_fits(fits_filename):
     return img, fitsimg[0].header['DATE-OBS'], fitsimg[0].header['EXPTIME']
 
 
-def scale_imshow(name, img, scale, interpolation=cv2.INTER_AREA):
-    """
-    Like cv2.imshow, but scaled. Uses opencv to show a scaled version of a image.
-    :param name: Window name
-    :param img: Image to show scaled
-    :param scale: value < 1 for smaller > 1 for bigger
-    :param interpolation: What kind of interpolation to do in the resize.
-    :return:
-    """
-    rimg = img.copy()
-    if rimg.dtype == np.bool_:
-        rimg = np.uint8(rimg) * 255
-    rmax = rimg.max()
-    rmin = rimg.min()
-    rimg = np.uint8(255 * ((rimg - rmin) / (rmax - rmin)))
-    rimg = cv2.resize(rimg, (0, 0), fx=scale, fy=scale, interpolation=interpolation)
-    cv2.imshow(name, rimg)
-
-
 def get_poly_values(fitsimg, poly):
     """
     Get the values from an image inside a polygon
@@ -84,8 +69,8 @@ def get_poly_values(fitsimg, poly):
     out = np.zeros_like(fitsimg)
     out[mask] = fitsimg[mask]
     # print(fitsimg[mask])
-    # scale_imshow('Test', cv2.threshold(out, 1, 1, cv2.THRESH_BINARY)[1], 0.5)
-    # cv2.waitKey(0)
+    # debug_show.show('Test', cv2.threshold(out, 1, 1, cv2.THRESH_BINARY)[1])
+    # debug_show.wait(0)
     return fitsimg[mask]
 
 
@@ -101,8 +86,8 @@ def get_poly_mask(img, poly):
     mask = np.zeros_like(img)
     cv2.fillPoly(mask, np.int32([poly]), 1)
     mask = mask > 0
-    # scale_imshow('Test', mask, 0.5)
-    # cv2.waitKey(0)
+    # debug_show.show('Test', mask)
+    # debug_show.wait(0)
     return mask
 
 
@@ -255,8 +240,8 @@ def get_led_on_threshold(rois, stretched_image, dscale, verbose=0):
         for poly in rois:
             cv2.polylines(led_thresh, [np.int32(poly)], True, (255, 0, 0), 2)
         if verbose >= 2:
-            scale_imshow('debug', led_thresh, dscale)
-            cv2.waitKey(1)
+            debug_show.show('debug', led_thresh)
+            debug_show.wait(5000)
     return led_on_thresh
 
 
@@ -703,8 +688,8 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
         dscale = 1000 / max(stretched_image.shape)
 
     if verbose >= 2:
-        scale_imshow('debug', stretched_image, dscale)
-        cv2.waitKey(10000)
+        debug_show.show('debug', stretched_image)
+        debug_show.wait(10000)
     if verbose >= 1:
         print('stretched_image', stretched_image.shape, stretched_image.dtype)
 

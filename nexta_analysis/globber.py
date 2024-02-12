@@ -14,30 +14,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
-import json
 import glob
-import read_time
+import json
 import os
 import traceback
 
+import numpy as np
+
+import read_time
+
 
 def main_cli():
-    fits_glob_pattern = './example_files/aLight*.fits'
+    #fits_glob_pattern = './example_files/aLight*.fits'
+    fits_glob_pattern = 'asi1600m-3/Light/aLight*.fits'
     fits_files = glob.glob(fits_glob_pattern)
-    roi_file = 'registration.json'
+    roi_file = 'registration.etreg'
     i = 0
     for fit_fn in fits_files:
         print(str(i+1) + '/' + str(len(fits_files)), fit_fn, end='\r')
         try:
-            read_time.main(roi_file, fit_fn, fit_fn + '.json')
+            read_time.main(roi_file, fit_fn, fit_fn + '.ettime')
         except Exception as e:
             print()
             traceback.print_exception(e)
         i += 1
     print()
     # Lets load up outputs and do some averaging.
-    json_files = glob.glob(os.path.splitext(fits_glob_pattern)[0] + '.json')
+    json_files = glob.glob(os.path.splitext(fits_glob_pattern)[0] + '.ettime')
     rolling_shutter_row_time = []
     fits_delta = []
     full_readout_time = []

@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
 import cv2
-import sys
-import numpy as np
 
 ARUCO_DICT = cv2.aruco.DICT_4X4_50
 
