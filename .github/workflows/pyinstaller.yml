@@ -14,7 +14,7 @@ jobs:
       with:
         python-version: "3.10"
 
-    - run: pip install -r poetry pyinstaller
+    - run: pip3 install poetry pyinstaller
       working-directory: ./nexta_analysis
     - run: poetry config virtualenvs.create false
       working-directory: ./nexta_analysis
