@@ -321,11 +321,7 @@ def draw_ordered_led_polys(img, points, dscale):
     return debug_img
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(
-        prog='LED Selector',
-        description='Selects LED areas in timing board')
+def add_parser_args(parser):
     parser.add_argument('--reference_image', '-i', required=True, type=str,
                         help='Reference image used to get placement of LED Array')
     parser.add_argument('--output', '-o', required=True, type=str, help='Output of Registration data')
@@ -333,7 +329,19 @@ def main():
                         help='How much to scale manual area selection image or debug images, defaults to an calculated reasonable value to fit on screen')
     parser.add_argument('--verbose', '-v', action='count', default=0,
                         help='How much debug info, -v for text, -vv for graphical debug info')
+
+
+def main_cli():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog='LED Selector',
+        description='Selects LED areas in timing board')
+    add_parser_args(parser)
     args = parser.parse_args()
+    main(args)
+
+
+def main(args):
     imgname = args.reference_image
     # img = cv2.imread(sys.argv[1])
     img = read_time.open_fits(imgname)[0]
@@ -362,4 +370,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main_cli()

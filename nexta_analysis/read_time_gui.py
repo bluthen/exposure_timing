@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import argparse
 import json
 import os.path
 import pathlib
@@ -397,5 +397,27 @@ def main():
     root.mainloop()
 
 
+def main_cli():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="Read Time",
+        description="Tool to read exposure timing information."
+    )
+    subparsers = parser.add_subparsers(title="subcommands",
+                                       dest="subparser",
+                                       description="Run without any subcommands to run GUI.")
+    regparser = subparsers.add_parser('registration', help="Generate registration file for reading")
+    led_selector.add_parser_args(regparser)
+    readtime_parser = subparsers.add_parser('readtime', help="Read time info from image.")
+    read_time.add_parser_args(readtime_parser)
+    args = parser.parse_args()
+    if args.subparser == 'registration':
+        led_selector.main(args)
+    elif args.subparser == 'readtime':
+        read_time.main(args)
+    else:
+        main()
+
+
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main_cli())

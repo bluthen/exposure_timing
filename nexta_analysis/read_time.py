@@ -675,7 +675,7 @@ def readtime(stretched_image, rois, date_obs, exptime, dscale=-1, verbose=0):
     return save_data
 
 
-def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
+def run(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
     with open(roi_json_path) as f:
         rois = json.load(f)
 
@@ -699,11 +699,7 @@ def main(roi_json_path, fits_path, output_fn, dscale=-1, verbose=0):
         json.dump(save_data, f, indent=4)
 
 
-def main_cli():
-    import argparse
-    parser = argparse.ArgumentParser(
-        prog='LED Selector',
-        description='Selects LED areas in timing board')
+def add_parser_args(parser):
     parser.add_argument('--image', '-i', required=True, type=str,
                         help='FiTS image to read')
     parser.add_argument('--output', '-o', required=True, type=str, help='Output of time data')
@@ -713,9 +709,20 @@ def main_cli():
                         help="Path to registration file created by led_selector")
     parser.add_argument('--verbose', '-v', action='count', default=0,
                         help='How much debug info, -v for text, -vv for graphical debug info')
-    args = parser.parse_args()
 
-    main(args.registration, args.image, args.output, args.scale, verbose=args.verbose)
+
+def main(args):
+    run(args.registration, args.image, args.output, args.scale, verbose=args.verbose)
+
+
+def main_cli():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog='LED Selector',
+        description='Selects LED areas in timing board')
+    add_parser_args(parser)
+    args = parser.parse_args()
+    main(args)
 
 
 if __name__ == '__main__':
