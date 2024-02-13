@@ -27,3 +27,4 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         path: nexta_analysis/dist/*
+        name: ${{ matrix.os }}-${{ strategy.job-index }}
