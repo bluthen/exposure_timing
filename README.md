@@ -1,7 +1,7 @@
 # Exposure Timing
 
 A lot of this project is based off New EXposure Timing Analyser (NEXTA): a GNSS-based precise timer, as presented in the wonderful paper [Reaching sub-millisecond accuracy in stellar
-occultations and artificial satellites tracking](https://arxiv.org/abs/2301.06378)[arvix] ([local mirror](./nexta_2301.06378.pdf)) by authors K. Kamiński1 , C. Weber2 , A. Marciniak1 , M. Żołnowski3 & M. Gędek.
+occultations and artificial satellites tracking](https://arxiv.org/abs/2301.06378)[arvix] ([local mirror](./nexta_2301.06378.pdf)) by authors K. Kamiński , C. Weber , A. Marciniak , M. Żołnowski & M. Gędek.
 
 The goals are to design electronics and boards to make this easy to use.
 
