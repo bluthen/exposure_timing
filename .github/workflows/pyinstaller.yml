@@ -20,8 +20,13 @@ jobs:
       working-directory: ./nexta_analysis
     - run: poetry install --with pyinstaller
       working-directory: ./nexta_analysis
-    - run: pyinstaller -F read_time_gui.py
+
+    - run: pyinstaller --target-arch universal2 -F read_time_gui.py
       working-directory: ./nexta_analysis
+      if: matrix.os != 'macos-latest'
+    - run: pyinstaller --target-arch universal2 -F read_time_gui.py
+      working-directory: ./nexta_analysis
+      if: matrix.os == 'macos-latest'
     # Optionally verify that it works (provided that it does not need user interaction)
     #- run: ./dist/read_time_gui/read_time_gui --help
     - uses: actions/upload-artifact@v4
