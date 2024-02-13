@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.11.1"
+        python-version: "3.11.8"
 
     - run: pip3 install poetry pyinstaller
       working-directory: ./nexta_analysis
@@ -24,7 +24,7 @@ jobs:
       working-directory: ./nexta_analysis
     # Optionally verify that it works (provided that it does not need user interaction)
     #- run: ./dist/read_time_gui/read_time_gui --help
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         path: nexta_analysis/dist/*
         name: ${{ matrix.os }}-${{ strategy.job-index }}
