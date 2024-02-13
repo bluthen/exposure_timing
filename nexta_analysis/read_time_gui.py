@@ -141,13 +141,13 @@ class ReadTimeGUI:
             self.__error_dialog('Failed to load image.')
             self.__set_statusbar('')
 
-        f = filedialog.askopenfile(mode='rb', title="Open Image", filetypes=[("FITS files", '.fit .fits')])
+        f = filedialog.askopenfile(mode='rb', title="Open Image", filetypes=[("FITS files", '.fit .fits'), ("All files", '.*')])
         if f is not None:
             self.run_in_work(open_image, self.__set_imagedata, error, f)
             self.__set_statusbar("Loading Image...")
 
     def __open_registration(self):
-        f = filedialog.askopenfile(mode='rb', title="Open Registration", filetypes=[("Registration files", '.etreg')])
+        f = filedialog.askopenfile(mode='rb', title="Open Registration", filetypes=[("Registration files", '.etreg'), ("All files", '.*')])
         if f is not None:
             try:
                 j = json.load(f)
@@ -182,13 +182,21 @@ class ReadTimeGUI:
             finally:
                 f.close()
 
+    def __clear_registration(self):
+        self.__state['registration'] = {'path': None, 'name': None, 'data': None}
+        if self.__state['image']['data'] is not None:
+            self.__state['image']['working'] = np.array(cv2.cvtColor(self.__state['image']['data'], cv2.COLOR_GRAY2RGB),
+                                                        dtype=np.uint8)
+            self.__canvas.set_image(self.__state['image']['working'])
+            self.__update_image()
+
+
     def __update_overlay(self, reg_json, img, path):
         def error(e):
             traceback.print_exception(e)
-            self.__state['registration'] = {'path': None, 'name': None, 'data': None}
+            self.__clear_registration()
             self.actionmenu.entryconfig('Read Time', state=tkinter.DISABLED)
             self.filemenu.entryconfig("Save Registration As", state=tkinter.DISABLED)
-            self.__update_image()
             self.__error_dialog('Error loading registration file.')
 
         def success(w):
@@ -277,14 +285,14 @@ class ReadTimeGUI:
         self.__set_statusbar('')
 
     def __manualregister(self):
+        self.__clear_registration()
+        self.__canvas.set_roi_mode(True)
         tkinter.messagebox.showinfo(title='Manual Register',
                                     message='Outline one LED at a time. '
                                             'To close the outline, right click. '
                                             'Start with the first "seconds" LEDs and move in order to the 0.1ms LEDs. '
                                             'Press ESC key to abort.')
         self.__set_statusbar('ROI Mode| Select polygons')
-        self.__state['registration'] = {'path': None, 'name': None, 'data': None}
-        self.__canvas.set_roi_mode(True)
 
     def __readtime(self):
         def error(e):
