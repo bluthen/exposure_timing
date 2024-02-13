@@ -7,8 +7,6 @@ jobs:
       fail-fast: false
       matrix:
         os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
-        arch: [x86_64, aarch64]
-
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
