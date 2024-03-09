@@ -22,6 +22,7 @@ import cv2
 import numpy as np
 from astropy.io import fits
 from auto_stretch.stretch import Stretch
+from typing import Dict
 
 import debug_show
 
@@ -294,7 +295,6 @@ def get_timing_led_rows(y_min, y_max, stretched_image, led_on_thresh, rois, verb
                 print('Checking Row', y, end='\r')
 
         # Get the values of our the intersection of the line and roi poly
-        # TODO: Might be faster is just the row of values roi masked
         linemask = np.zeros_like(stretched_image)
         linemask[y] = np.ones(stretched_image.shape[1])
         linemask = linemask > 0
@@ -351,7 +351,6 @@ def get_timing_led_rows_faster(y_min, y_max, stretched_image, led_on_thresh, roi
                 print('Checking Row', y, end='\r')
 
         # Get the values of our the intersection of the line and roi poly
-        # TODO: Might be faster is just the row of values roi masked
         row_led_in = []
         row_led_on = []
         for roi_idx in range(len(rois) - 1):
@@ -486,6 +485,10 @@ def filter_outliers(timed_rows, fits_header_nextatime, verbose=0):
     return timed_rows, increasing
 
 
+def get_digit_at_place(value, exp):
+    return value // (10 ** exp) % 10
+
+
 def calculate_stats(rolling_shutter_times, timed_rows, increasing, rows, fits_header_nextatime, verbose=0):
     """
     Tries to calculate some statistics about our timing, like how off the fits timestamp is, rolling shutter roll readout time, etc.
@@ -508,9 +511,8 @@ def calculate_stats(rolling_shutter_times, timed_rows, increasing, rows, fits_he
     # Generate some stats
     for y in timed_rows.keys():
         # For stats, lets try to only use values with 10^-4 or better resolution
-        # TODO: maybe this could be an argument, in case using a global shutter camera with longer exposure
         if timed_rows[y]['err'] <= -4:
-            best_rows.append({'y': y, 'value': float(timed_rows[y]['value'])})
+            best_rows.append({'y': y, 'value': float(timed_rows[y]['value']), 'err': timed_rows[y]['err']})
 
     rst = np.array(rolling_shutter_times)
     rst = rst[rst != np.array(None)]
@@ -518,10 +520,34 @@ def calculate_stats(rolling_shutter_times, timed_rows, increasing, rows, fits_he
     first_pixel_time = None
     last_pixel_time = None
     full_readout_time = None
-    if rst.shape[0] > 0:
+    if rst.shape[0] > 0 and len(best_rows) >= 0:
         rst_mean = rst.mean()
-        # For now lets just use a middle best row
-        row = best_rows[int(len(best_rows) / 2.0 + 0.5)]
+        # In an effort to get more accurate timing, lets use first row that increments.
+        increment_rows = []
+        last_row: None | Dict[str, float] = None
+        for row in best_rows:
+            if last_row is not None:
+                row_diff = abs(last_row['y'] - row['y'])
+                err_diff = last_row['err'] == row['err']
+                lerr_place = get_digit_at_place(last_row['value'], row['err'] + 1)
+                err_place = get_digit_at_place(row['value'], row['err'] + 1)
+                err_place_diff = int(abs(lerr_place - err_place))
+                # print('DEBUG: ', row_diff, err_diff, err_place_diff)
+                if row_diff == 1 and err_diff and (err_place_diff == 1 or err_place_diff == 9):
+                    increment_rows.append([last_row, row])
+            last_row = row
+        # print('inc rows:', len(increment_rows), len(increment_rows) >= 0)
+        if len(increment_rows) >= 0:
+            # print('DEBUG: Using an inc row')
+            irows = increment_rows[int(len(increment_rows) / 2.0 + 0.5)]
+            if irows[0]['value'] - irows[1]['value'] > 0:
+                row = irows[0]
+            else:
+                row = irows[1]
+        else:
+            # Couldn't get increment row, so lets just use a middle best row
+            # print('DEBUG: Using plain middle row')
+            row = best_rows[int(len(best_rows) / 2.0 + 0.5)]
         first_pixel_time = row['value'] - rst_mean * row['y']
         last_pixel_time = row['value'] + rst_mean * (rows - row['y'])
         if first_pixel_time < 0 or fits_header_nextatime >= 8 and first_pixel_time <= 2:
