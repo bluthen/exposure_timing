@@ -524,6 +524,15 @@ void setup()
     for(i=22; i<42; i++) pinMode(i, OUTPUT);
     for(i=22; i<42; i++) digitalWrite(i, LOW);
 
+    // Intial Diagnostic loop to eye check LEDs are wired correctly.
+    for(i=22; i<42; i++) {
+      digitalWrite(i, HIGH);
+      delay(500);
+      digitalWrite(i, LOW);
+    } 
+
+    for(i=22; i<42; i++) digitalWrite(i, LOW);
+
     digitalWrite(41, 1); //display impossible LED combination as indication of beginning of setup
     digitalWrite(39, 1);
     digitalWrite(37, 1);
