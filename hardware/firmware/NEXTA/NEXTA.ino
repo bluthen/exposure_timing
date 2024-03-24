@@ -14,7 +14,7 @@
 //Arduino IDE 1.8.19
 //Arduino SAM Boards 1.6.12
 
-//#define correct_drift           //if correct_drift is defined (uncommented) than Arduino clock drift correction will be implemented at the expense of slightly longer loop time
+#define correct_drift           //if correct_drift is defined (uncommented) than Arduino clock drift correction will be implemented at the expense of slightly longer loop time
 #define GPS_wait_for_fix 1      //should NEXTA wait for fix after power up? (0-no, 1-yes)
 #define GPS_wait_for_drift 1    //should NEXTA callibrate itself after power up? (0-no, 1-yes)
 #define Arduino_drift_limit 10  //maximum acceptable Arduino clock drift in microsec / sec, default 10
@@ -162,14 +162,14 @@ int getUBX(byte resp[], int& len)
 //set GPS for time functions
 void setSerial()
 {
-    Serial.print("GPS - setting serial speed to 115200   ");
+    Serial.print("GPS - setting serial speed to 57600    ");
     byte message[] = {0xB5, 0x62, 0x06, 0x00,
       0x14, 0x00, //message length = 20 bytes
       0x01, 0x00, //port ID, reserved
       0x00, 0x00, //txReady disabled
       0xD0, 0x08, 0x00, 0x00, //UART mode (NEO 7 old UBX protocol version)
 //      0xC0, 0x08, 0x00, 0x00, //UART mode
-      0x00, 0xC2, 0x01, 0x00, //baud rate
+      0x00, 0xE1, 0x00, 0x00, //baud rate
       0x07, 0x00, //inMask (UBOX, NMEA and RTCM2 protocols enabled)
       0x03, 0x00, //outMask (UBOX, NMEA protocols enabled)
       0x00, 0x00, //bit flags (extended TX timeout disabled)
@@ -554,11 +554,11 @@ void setup()
     getVersion(); //does not work on any GPS I tested
     delay(1500);
 
-    setSerial(); //GPS serial port speed 115200
+    setSerial(); //GPS serial port speed 57600 
 
     delay(1500);
     Serial1.end();
-    Serial1.begin(115200);
+    Serial1.begin(57600);
     delay(1500);
 
     setRate(); //measurement rate 1Hz
