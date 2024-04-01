@@ -14,7 +14,7 @@ The goals are to design electronics and boards to make this easy to use.
    * Decode each rows time
    * Generates timing info, real first exposure time, and time for any row (if rolling shutter camera). Recommends offset to be added to header/metadata. 
 
-![GUI having done time analysis](nexta_analysis/shot2.jpg)
+![GUI having done time analysis](nexta_analysis/screen_shot2.jpg)
 *Showing the simple GUI after time analysis has been run. Header delta is what should be added to the time stamp to make it more accurate.*
 
 
