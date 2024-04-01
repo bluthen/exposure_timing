@@ -75,6 +75,13 @@ class ReadTimeGUI:
         self.actionmenu.add_command(label="Read Time", command=self.__readtime, state=tkinter.DISABLED)
 
         menubar.add_cascade(label="Action", menu=self.actionmenu)
+        # Help
+        self.actionmenu = Menu(menubar, tearoff=0)
+        self.actionmenu.add_command(label="Help", command=self.__help, state=tkinter.NORMAL)
+        self.actionmenu.add_command(label="About", command=self.__about, state=tkinter.NORMAL)
+
+        menubar.add_cascade(label="Help", menu=self.actionmenu)
+
         self.__master.config(menu=menubar)
 
     def __setup_canvas(self):
@@ -283,6 +290,20 @@ class ReadTimeGUI:
 
     def __on_rois_abort(self):
         self.__set_statusbar('')
+
+    def __help(self):
+        tkinter.messagebox.showinfo(title='Help',
+                                    message='For users guides, and instructional videos visit.\nhttps://starsynctrackers.com/learn/nexta\n'
+                                            'To file bug reports goto:\nhttps://github.com/bluthen/exposure_timing/issues')
+
+    def __about(self):
+        tkinter.messagebox.showinfo(title='About',
+                                    message='Exposure Timing Analysis Software\n'
+                                            'Copyright (c) 2024 Russell Valentine\n'
+                                            'based on the paper:\n\n'
+                                            'Kamiński, K., Weber, C., Marciniak, A., Żołnowski, M., & Gędek, M. (2023).\n'
+                                             'Reaching sub-millisecond accuracy in stellar occultations and artificial\n'
+                                             'satellites tracking. arXiv. https://doi.org/10.48550/ARXIV.2301.06378')
 
     def __manualregister(self):
         self.__clear_registration()

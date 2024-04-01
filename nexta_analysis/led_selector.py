@@ -196,7 +196,7 @@ def get_contours(roi_image, roi_mean, img, dscale, verbose=0):
     """
     # Find Contours
     # Since ROI is LEDs and LED bar border, the mean should be a good way to serperate them.
-    test_edge_thresh = cv2.threshold(np.uint8(roi_image), roi_mean, 255, cv2.THRESH_BINARY)[1]
+    test_edge_thresh = cv2.threshold(np.uint8(roi_image), roi_mean*1.1, 255, cv2.THRESH_BINARY)[1]
     if verbose >= 2:
         debug_show.show('debug', test_edge_thresh)
         debug_show.wait(10000)
