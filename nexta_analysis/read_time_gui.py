@@ -76,11 +76,11 @@ class ReadTimeGUI:
 
         menubar.add_cascade(label="Action", menu=self.actionmenu)
         # Help
-        self.actionmenu = Menu(menubar, tearoff=0)
-        self.actionmenu.add_command(label="Help", command=self.__help, state=tkinter.NORMAL)
-        self.actionmenu.add_command(label="About", command=self.__about, state=tkinter.NORMAL)
+        self.helpmenu = Menu(menubar, tearoff=0)
+        self.helpmenu.add_command(label="Help", command=self.__help, state=tkinter.NORMAL)
+        self.helpmenu.add_command(label="About", command=self.__about, state=tkinter.NORMAL)
 
-        menubar.add_cascade(label="Help", menu=self.actionmenu)
+        menubar.add_cascade(label="Help", menu=self.helpmenu)
 
         self.__master.config(menu=menubar)
 
