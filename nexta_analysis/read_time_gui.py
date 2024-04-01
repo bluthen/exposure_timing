@@ -299,6 +299,7 @@ class ReadTimeGUI:
     def __about(self):
         tkinter.messagebox.showinfo(title='About',
                                     message='Exposure Timing Analysis Software\n'
+                                            'Version 1.1.0\n'
                                             'Copyright (c) 2024 Russell Valentine\n'
                                             'based on the paper:\n\n'
                                             'Kamiński, K., Weber, C., Marciniak, A., Żołnowski, M., & Gędek, M. (2023).\n'
