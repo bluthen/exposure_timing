@@ -1,7 +1,8 @@
-Designation,Part,Link
-"R1,R2,R3,R3,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,R16,R17,R18,R19,R20",0805 1k Ohm Resistor,https://www.digikey.com/en/products/detail/walsin-technology-corporation/WR08X102-JTL/13240928
-"BAR1,BAR2",LTA-1000G,https://www.digikey.com/en/products/detail/liteon/LTA-1000G/153278
-GPS1,UBLOX NEO-7M Module,https://www.ebay.com/sch/i.html?_from=R40&_trksid=p4432023.m570.l1313&_nkw=neo-7m&_sacat=0
-Arduino Due,,https://www.digikey.com/en/products/detail/arduino/A000062/3712582
-Male Headers to connect between Arduino and PCB,Male .1” headers,https://www.digikey.com/en/products/detail/4-103327-0/A26514-40-ND/297924
-GPS Antenna SMA,,https://www.amazon.com/Bingfu-Waterproof-Navigation-Connector-Tracking/dp/B07R7RC96G/?th=1
+Designator,Footprint,Comment,JLCPCB Part#,Link
+"R1,R2,R3,R3,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,R16,R17,R18,R19,R20",805,0805 1k Ohm Resistor,C25623,https://www.digikey.com/en/products/detail/walsin-technology-corporation/WR08X102-JTL/13240928
+"BAR1,BAR2",,LTA-1000G,,https://www.digikey.com/en/products/detail/liteon/LTA-1000G/153278
+GPS1,,UBLOX NEO-7M Module,,https://www.ebay.com/sch/i.html?_from=R40&_trksid=p4432023.m570.l1313&_nkw=neo-7m&_sacat=0
+Arduino Due,,,,https://www.digikey.com/en/products/detail/arduino/A000062/3712582
+Male Headers to connect between Arduino and PCB,,Male .1” headers,,https://www.digikey.com/en/products/detail/4-103327-0/A26514-40-ND/297924
+GPS Antenna SMA,,,,https://www.amazon.com/Bingfu-Waterproof-Navigation-Connector-Tracking/dp/B07R7RC96G/?th=1
+GPS1,,Female .1” right angle,,https://www.digikey.com/en/products/detail/sullins-connector-solutions/PPPC051LGBN-RC/775938
