@@ -49,7 +49,7 @@ A better introduction is described in the paper listed above.
 
 There is a still a lot to do, this project is in it's early stages. Check out the [issue tracker](./issues) and, feel free to contribute.
 
-# Instructional Videos, Purchase complete NEXTA kits
+# Instructional Videos/Purchase complete NEXTA kits
 
 * [https://starsynctrackers.com/store/learn-nexta/](https://starsynctrackers.com/store/learn-nexta/) - Includes Arduino, assembled NEXTA Shield, GPS Moudle, GPS Antenna, Plastic Stand, and Micro USB Cable
 
